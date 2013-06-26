@@ -1,4 +1,6 @@
 /*
+ * A simple restricted transactional memory micro-benchmark.
+ *
  * Copyright (c) 2013 Carl G. Ritson <cgr@kent.ac.uk>
  *
  * This file may be freely used, copied, or distributed without compensation 
