@@ -1,6 +1,5 @@
-rtm-bench
-=========
-Micro-benchmark for Restricted Transactional Memory.
+### rtm-bench
+### Micro-benchmark for Restricted Transactional Memory
 
 This is code is a small set of micro-benchmarks for testing the performance of Intel's Restricted Transactional Memory features added with Transactional Synchronization Extensions in Haswell micro-architecture processors.
 
