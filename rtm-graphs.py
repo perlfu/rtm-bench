@@ -90,12 +90,19 @@ def dup_entry(entry):
     return copy.deepcopy(entry)
 
 def enhance_entry(entry):
+    # count successful transactions (xabort is a success)
+    success = 0
+    for c in [42, 1]:
+        if c in entry['counters']:
+            success += entry['counters'][c]
+    
     if entry['ns'] > 0:
-        entry['bpns'] = float(entry['op_size'] * entry['count']) / float(entry['ns'])
+        entry['bpns'] = float(entry['op_size'] * success) / float(entry['ns'])
     else:
         entry['bpns'] = 0.0
-    if entry['op_size'] > 0:
-        entry['nspb'] = float(entry['ns']) / float(entry['op_size'] * entry['count']) 
+
+    if (entry['op_size'] > 0) and (success > 0):
+        entry['nspb'] = float(entry['ns']) / float(entry['op_size'] * success) 
     else:
         entry['nspb'] = 0.0
     
