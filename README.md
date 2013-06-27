@@ -6,10 +6,10 @@ This is code is a small set of micro-benchmarks for testing the performance of I
 Test code is not finished to a high standard, but hopefully might be of use, in education or the development of more complete benchmarks.
 
 Expected usage:
-$ make
-$ ./rtm-bench > rtm.log
-$ # Go watch all Lord of the Rings extended trilogy
-$ # ... 12 hours later
-$ ./rtm-graph.py rtm.log results.pdf
+    $ make
+    $ ./rtm-bench > rtm.log
+    # Go watch all Lord of the Rings extended trilogy
+    # ... 12+ hours later
+    $ ./rtm-graph.py rtm.log results.pdf
 
 -- Carl Ritson (20130626)
