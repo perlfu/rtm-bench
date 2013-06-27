@@ -61,6 +61,15 @@ def counter_names():
         41: 'failure',
         42: 'success'
     }
+def counter_order():
+    return [42, 41, 0, 2, 4, 6, 14, 8]
+def ordered_counters(counters):
+    order = counter_order()
+    result = []
+    for cv in order:
+        if cv in counters:
+            result.append((cv, counters[cv]))
+    return result
 
 def new_test_entry(mode=None, thread=None, n_threads=1):
     entry = {
@@ -251,7 +260,7 @@ def plot_entries(pages, data, threads, rate_title, rate_keys, error_title, error
                             counters[c] = names[c]
             
             ls = line_styles()
-            for (cv, cn) in counters.items():
+            for (cv, cn) in ordered_counters(counters):
                 xs = []
                 ys = []
                 for entry in data:
