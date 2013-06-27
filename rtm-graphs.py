@@ -378,6 +378,7 @@ def plot_data(fn, data):
 
     mt_xrxr = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'x_read', 'x_read'], data, precise=True)))
     mt_xwxw = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'x_write', 'x_write'], data, precise=True)))
+    mt_ucuc = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'u_cas', 'u_cas'], data, precise=True)))
     mt_xcxc = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'x_cas', 'x_cas'], data, precise=True)))
     mt_xcur = lt_data(1000, flatten_data(select_data(['heterogenous', 'shared', 'x_cas', 'u_read'], data, precise=True)))
     mt_xwuw = lt_data(1000, flatten_data(select_data(['heterogenous', 'shared', 'x_write', 'u_write'], data, precise=True)))
@@ -405,6 +406,7 @@ def plot_data(fn, data):
     plot_entries(pages, mt_xcxc, [0,1], None, ['x_cas32'], '', ['x_cas32'])
     plot_entries(pages, mt_xcur, [0,1], None, ['x_cas32', 'u_read32'], '', ['x_cas32', 'u_read32'])
     plot_entries(pages, mt_xwuw, [0,1], None, ['x_write32', 'u_write32'], '', ['x_write32', 'u_write32'])
+    plot_entries(pages, mt_ucuc + mt_xcxc, [0,1], None, ['x_cas32', 'u_cas32'], None, [])
     pages.close()
 
 def write_data(fn, data):
