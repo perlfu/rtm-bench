@@ -465,6 +465,7 @@ static void memset64(uint8_t *_mem, uint64_t v, const unsigned long _size)
         *(mem++) = v;
 }
 
+// returns 1 on successful CAS
 static inline uint32_t asm_lock_cas32(
     volatile uint32_t *ptr, 
     uint32_t ov, uint32_t nv)
@@ -483,6 +484,7 @@ static inline uint32_t asm_lock_cas32(
     return result;
 }
 
+// returns 1 on successful CAS
 static inline uint64_t asm_lock_cas64(
     volatile uint64_t *ptr, 
     uint64_t ov, uint64_t nv)
