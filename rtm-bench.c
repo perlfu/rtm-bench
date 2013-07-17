@@ -510,7 +510,7 @@ static inline unsigned u_cas32(uint8_t *_mem, const unsigned long _size)
     unsigned ret = 0;
     
     while (count--) {
-        ret |= asm_lock_cas32(mem, CAS_P, CAS_Q);
+        ret |= (asm_lock_cas32(mem, CAS_P, CAS_Q) ^ 1);
         mem++;
     }
     ret = ret ? FAILURE : SUCCESS;
@@ -525,7 +525,7 @@ static inline unsigned u_cas64(uint8_t *_mem, const unsigned long _size)
     unsigned ret = 0;
     
     while (count--) {
-        ret |= asm_lock_cas64(mem, CAS_P, CAS_Q);
+        ret |= (asm_lock_cas64(mem, CAS_P, CAS_Q) ^ 1);
         mem++;
     }
     ret = ret ? FAILURE : SUCCESS;
