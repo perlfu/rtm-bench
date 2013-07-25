@@ -10,8 +10,22 @@
 # 
 
 import re, sys
-import copy
+import copy as pycopy
 import cPickle as pickle
+
+confidence = 0.95
+
+has_confidence = False
+try:
+    from numpy import *
+    import numpy as np
+    import numpy.numarray as na
+
+    from scipy.stats.distributions import norm
+
+    has_confidence = True
+except:
+    die("numpy or scipy not available")
 
 can_plot = False
 try:
@@ -23,7 +37,7 @@ try:
     
     can_plot = True
 except:
-    can_plot = False
+    pass
 
 def warn(*s):
     print >>sys.stderr, "".join(map(str, s))
@@ -87,7 +101,7 @@ def new_test_entry(mode=None, thread=None, n_threads=1):
     return entry
 
 def dup_entry(entry):
-    return copy.deepcopy(entry)
+    return pycopy.deepcopy(entry)
 
 def enhance_entry(entry):
     # count successful transactions (xabort is a success)
@@ -160,10 +174,6 @@ def parse_test(mode, threads):
     return (key, data)
 
 def parse_log(fn):
-    fh = open(fn, 'r')
-    lines = fh.readlines()
-    fh.close()
-    
     mode = None
     memory = "isolated"
     mode_line = re.compile(r'(single|homogenous|heterogenous) thread tests')
@@ -175,7 +185,10 @@ def parse_log(fn):
     data = []
     in_reset = False
 
-    for line in lines:
+    n = 0
+    fh = open(fn, 'r')
+    for line in fh:
+        n += 1
         if mode_line.match(line):
             if len(buffer.keys()) > 0:
                 (key, results) = parse_test(mode, buffer)
@@ -207,7 +220,8 @@ def parse_log(fn):
             buffer[thread].append(i_line)
             if in_reset and len(buffer[thread]) >= 3:
                 in_reset = False
-    
+    fh.close()
+
     return data
 
 
@@ -304,22 +318,71 @@ def select_data(key, data, precise = False):
                 selected.append((k, v))
     return selected
 
+def as_list(x):
+    if isinstance(x, list):
+        return x
+    else:
+        return [ x ]
+
+def unbox(x):
+    if isinstance(x, list):
+        return x[0]
+    else:
+        return x
+
 def add_entry(dst, src):
     if 'cn' in dst:
+        dst['count'].append(src['count'])
+        dst['cycles'].append(src['cycles'])
+        dst['ns'].append(src['ns'])
         dst['cn'] += 1
+        for (k, v) in src['counters'].items():
+            if k in dst['counters']:
+                dst['counters'][k].append(unbox(v))
+            else:
+                dst['counters'][k] = as_list(v)
     else:
+        dst['count'] = [dst['count'], src['count']]
+        dst['cycles'] = [dst['cycles'], src['cycles']]
+        dst['ns'] = [dst['ns'], src['ns']]
         dst['cn'] = 2
+        for (k, v) in dst['counters'].items():
+            dst['counters'][k] = as_list(v)
+        for (k, v) in src['counters'].items():
+            if k in dst['counters']:
+                dst['counters'][k] = [unbox(dst['counters'][k]), unbox(v)]
+            else:
+                dst['counters'][k] = as_list(v)
 
-    dst['count'] += src['count']
-    dst['cycles'] += src['cycles']
-    dst['ns'] += src['ns']
-    for (k, v) in src['counters'].items():
-        if k in dst['counters']:
-            dst['counters'][k] += v
+def avg_with_error(_d):
+    try:
+        d = map(float, _d)
+    except:
+        print _d
+        raise
+    if has_confidence:
+        n = len(d)
+        avg = mean(d)
+        sd = std(d)
+        alpha = 1.0 - confidence
+        intv = norm.ppf(1.0 - alpha/2.0) * (sd / sqrt(n))
+        return (avg, intv)
+    else:
+        n = len(d)
+        if n > 0:
+            return (sum(d) / float(n), 0.0)
         else:
-            dst['counters'][k] = v
+            return (0.0, 0.0)
 
 def avg_entry(entry):
+    if 'cn' in entry:
+        (entry['count'], entry['count_e']) = avg_with_error(entry['count'])
+        (entry['cycles'], entry['cycles_e']) = avg_with_error(entry['cycles'])
+        (entry['ns'], entry['ns_e']) = avg_with_error(entry['ns'])
+        entry['counters_e'] = {}
+        for (k, v) in entry['counters'].items():
+            (entry['counters'][k], entry['counters_e'][k]) = avg_with_error(entry['counters'][k])
+        del entry['cn']
     enhance_entry(entry)
 
 def sum_data(data):
@@ -383,12 +446,12 @@ def plot_data(fn, data):
         if entry['op_size'] <= 64:
             report_entry(entry)
 
-    mt_xrxr = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'x_read', 'x_read'], data, precise=True)))
-    mt_xwxw = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'x_write', 'x_write'], data, precise=True)))
-    mt_ucuc = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'u_cas', 'u_cas'], data, precise=True)))
-    mt_xcxc = lt_data(1000, flatten_data(select_data(['homogenous', 'shared', 'x_cas', 'x_cas'], data, precise=True)))
-    mt_xcur = lt_data(1000, flatten_data(select_data(['heterogenous', 'shared', 'x_cas', 'u_read'], data, precise=True)))
-    mt_xwuw = lt_data(1000, flatten_data(select_data(['heterogenous', 'shared', 'x_write', 'u_write'], data, precise=True)))
+    mt_xrxr = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_read', 'x_read'], data, precise=True)))
+    mt_xwxw = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_write', 'x_write'], data, precise=True)))
+    mt_ucuc = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'u_cas', 'u_cas'], data, precise=True)))
+    mt_xcxc = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_cas', 'x_cas'], data, precise=True)))
+    mt_xcur = lt_data(1000, sum_data(select_data(['heterogenous', 'shared', 'x_cas', 'u_read'], data, precise=True)))
+    mt_xwuw = lt_data(1000, sum_data(select_data(['heterogenous', 'shared', 'x_write', 'u_write'], data, precise=True)))
 
     pages = PdfPages(fn)
     plot_entries(pages, st_64, [0], None, ops_read, '', ops_read)
