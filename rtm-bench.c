@@ -79,6 +79,7 @@ static unsigned int  config_test                = 0;
 static unsigned int  config_thread_shifting     = 1;
 static unsigned int  config_isolated_tests      = 1;
 static unsigned int  config_shared_tests        = 1;
+static unsigned int  config_limited_tests       = 1;
 
 // thread data
 typedef struct _thread_param_t {
@@ -955,6 +956,7 @@ static void usage(char *name)
         "  -T           disable thread shifting\n"
         "  -I           disable isolated memory tests\n"
         "  -S           disable shared memory tests\n"
+        "  -x           enable limited thread test program\n"
         "\n",
         name,
         config_thread_memory_size,
@@ -990,7 +992,7 @@ static unsigned long ensure_pow2(unsigned long x)
 static void parse_args(int argc, char *argv[])
 {
     char ch;
-    while ((ch = getopt(argc, argv, "m:g:c:o:t:l:z:TIS")) != -1) {
+    while ((ch = getopt(argc, argv, "m:g:c:o:t:l:z:TISx")) != -1) {
         switch(ch) {
             case 'm':
                 config_thread_memory_size = strtol(optarg, NULL, 10);
@@ -1023,6 +1025,9 @@ static void parse_args(int argc, char *argv[])
                 break;
             case 'S':
                 config_shared_tests = 0;
+                break;
+            case 'x':
+                config_limited_tests = 1;
                 break;
             case '?':
             default:
@@ -1097,6 +1102,58 @@ static void run_heterogenous_thread_tests(void)
     }
 }
 
+static void isolated_memory(void)
+{
+    main_log("isolated memory tests");
+    use_shared_memory = 0;
+}
+
+static void shared_memory(void)
+{
+    main_log("shared memory tests");
+    use_shared_memory = 1;
+}
+
+static void run_limited_thread_tests(void)
+{
+    shared_memory();
+
+    main_log("homogenous thread tests");
+
+    set_barrier_count(2);
+    start_thread(test_thread, X_READ);
+    start_thread(test_thread, X_READ);
+    wait_for_threads();
+    
+    set_barrier_count(2);
+    start_thread(test_thread, X_WRITE);
+    start_thread(test_thread, X_WRITE);
+    wait_for_threads();
+    
+    set_barrier_count(2);
+    start_thread(test_thread, U_CAS);
+    start_thread(test_thread, U_CAS);
+    wait_for_threads();
+    
+    set_barrier_count(2);
+    start_thread(test_thread, X_CAS);
+    start_thread(test_thread, X_CAS);
+    wait_for_threads();
+
+
+    main_log("heterogenous thread tests");
+
+    set_barrier_count(2);
+    start_thread(test_thread, X_CAS);
+    start_thread(test_thread, U_READ);
+    wait_for_threads();
+    
+    set_barrier_count(2);
+    start_thread(test_thread, X_WRITE);
+    start_thread(test_thread, U_WRITE);
+    wait_for_threads();
+}
+
 int main(int argc, char *argv[])
 {
     // setup
@@ -1109,20 +1166,22 @@ int main(int argc, char *argv[])
     setup_memory(config_max_threads, config_thread_memory_size, config_thread_gap_size);
    
     // run tests
-    run_single_thread_tests();
-    
-    if (config_isolated_tests) {
-        main_log("isolated memory tests");
-        use_shared_memory = 0;
-        run_homogenous_thread_tests(config_max_threads);
-        run_heterogenous_thread_tests();
-    }
+    if (config_limited_tests) {
+        run_limited_thread_tests();
+    } else {
+        run_single_thread_tests();
+        
+        if (config_isolated_tests) {
+            isolated_memory();
+            run_homogenous_thread_tests(config_max_threads);
+            run_heterogenous_thread_tests();
+        }
 
-    if (config_shared_tests) {
-        main_log("shared memory tests");
-        use_shared_memory = 1;
-        run_homogenous_thread_tests(config_max_threads);
-        run_heterogenous_thread_tests();
+        if (config_shared_tests) {
+            shared_memory();
+            run_homogenous_thread_tests(config_max_threads);
+            run_heterogenous_thread_tests();
+        }
     }
     
     // FIXME: tidy up
