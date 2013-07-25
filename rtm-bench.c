@@ -951,6 +951,7 @@ static void usage(char *name)
         "  -o <bytes>   memory operation max. size   [default: %lu]\n"
         "  -t <number>  run a specific test          [default is all]\n"
         "  -l <number>  number of test loops         [default: %lu]\n"
+        "  -z <number>  override max threads         [default: %d]\n"
         "  -T           disable thread shifting\n"
         "  -I           disable isolated memory tests\n"
         "  -S           disable shared memory tests\n"
@@ -960,7 +961,8 @@ static void usage(char *name)
         config_thread_gap_size,
         config_op_max_cycles,
         config_op_max_size,
-        config_test_loops
+        config_test_loops,
+        config_max_threads
     );
     exit(2);
 }
@@ -988,7 +990,7 @@ static unsigned long ensure_pow2(unsigned long x)
 static void parse_args(int argc, char *argv[])
 {
     char ch;
-    while ((ch = getopt(argc, argv, "m:g:c:o:t:l:TIS")) != -1) {
+    while ((ch = getopt(argc, argv, "m:g:c:o:t:l:z:TIS")) != -1) {
         switch(ch) {
             case 'm':
                 config_thread_memory_size = strtol(optarg, NULL, 10);
@@ -1009,6 +1011,9 @@ static void parse_args(int argc, char *argv[])
                 break;
             case 'l':
                 config_test_loops = strtol(optarg, NULL, 10);
+                break;
+            case 'z':
+                config_max_threads = strtol(optarg, NULL, 10);
                 break;
             case 'T':
                 config_thread_shifting = 0;
