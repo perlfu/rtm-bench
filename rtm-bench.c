@@ -836,6 +836,8 @@ static inline void run_test(const int id,
         if (counter[i] > 0)
             thread_log(id, "counter %d = %lu", i, counter[i]);
     }
+
+    barrier();
 }
 
 static void *test_thread(void *param)
@@ -927,6 +929,8 @@ static void *test_thread(void *param)
                 }
                 break;
         }
+
+        barrier();
     }
 
     shutdown_thread(id);
