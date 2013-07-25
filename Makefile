@@ -1,6 +1,7 @@
 targets = rtm-bench
 cc = gcc -O2 -Wall
 link = -lpthread -lrt
+# remove -lrt to compile on OS X
 
 all: $(targets)
 
