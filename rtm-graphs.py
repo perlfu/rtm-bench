@@ -112,18 +112,34 @@ def enhance_entry(entry):
     
     if entry['ns'] > 0:
         entry['bpns'] = float(entry['op_size'] * success) / float(entry['ns'])
+        if ('ns_e' in entry) and (entry['ns_e'] > 0.0):
+            entry['bpns_e'] = entry['ns_e']
+        else:
+            entry['bpns_e'] = 0.0
     else:
         entry['bpns'] = 0.0
+        entry['bpns_e'] = 0.0
 
     if (entry['op_size'] > 0) and (success > 0):
         entry['nspb'] = float(entry['ns']) / float(entry['op_size'] * success) 
+        if 'ns_e' in entry:
+            entry['nspb_e'] = entry['ns_e']
+        else:
+            entry['nspb_e'] = 0.0
     else:
         entry['nspb'] = 0.0
+        entry['nspb_e'] = 0.0
     
     pcc = {}
+    pcc_e = {}
     for (c, v) in entry['counters'].items():
         pcc[c] = (float(v) / float(entry['count'])) * 100.0
+        if 'counters_e' in entry:
+            pcc_e[c] = entry['counters_e'][c] / float(entry['count'])
+        else:
+            pcc_e[c] = 0.0
     entry['pcc'] = pcc
+    entry['pcc_e'] = pcc_e
 
 def parse_test(mode, threads):
     test_line = re.compile(r'test = (\S+), count = (\d+), op_size = (\d+), stride = (\d+)')
@@ -241,11 +257,12 @@ def plot_entries(pages, data, threads, rate_title, rate_keys, error_title, error
                 label = key
             xs = []
             ys = []
+            yerr = []
             for entry in data:
                 if (entry['thread'] == thread) and (entry['test'] == key):
                     xs.append(entry['op_size'])
                     ys.append(entry['bpns'])
-
+                    yerr.append(0.0)
             if len(xs) > 0 and len(ys) > 0:
                 style = ls.pop()
                 ax.plot(xs, ys, c=style['c'], ls=style['ls'], marker=style['m'], label=label, lw=style['lw'])
@@ -284,13 +301,16 @@ def plot_entries(pages, data, threads, rate_title, rate_keys, error_title, error
             for (cv, cn) in ordered_counters(counters):
                 xs = []
                 ys = []
+                yerr = []
                 for entry in data:
                     if (entry['thread'] == thread) and (entry['test'] == key):
                         xs.append(entry['op_size'])
                         if cv in entry['pcc']:
                             ys.append(entry['pcc'][cv])
+                            yerr.append(entry['pcc_e'][cv])
                         else:
                             ys.append(0.0)
+                            yerr.append(0.0)
                 if len(xs) > 0 and len(ys) > 0:
                     style = ls.pop()
                     ax.plot(xs, ys, c=style['c'], ls=style['ls'], marker=style['m'], label=cn, lw=style['lw'])
@@ -385,11 +405,14 @@ def avg_entry(entry):
         del entry['cn']
     enhance_entry(entry)
 
-def sum_data(data):
+def sum_data(data, maintain_threads=False):
     master = {}
     for (k, v) in data:
-        kn = "|".join(k)
         for (tn, td) in v.items():
+            if maintain_threads:
+                kn = "|".join(k + [ str(tn) ])
+            else:
+                kn = "|".join(k)
             if kn in master:
                 md = master[kn]
                 for i in range(len(td)):
@@ -446,12 +469,12 @@ def plot_data(fn, data):
         if entry['op_size'] <= 64:
             report_entry(entry)
 
-    mt_xrxr = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_read', 'x_read'], data, precise=True)))
-    mt_xwxw = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_write', 'x_write'], data, precise=True)))
-    mt_ucuc = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'u_cas', 'u_cas'], data, precise=True)))
-    mt_xcxc = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_cas', 'x_cas'], data, precise=True)))
-    mt_xcur = lt_data(1000, sum_data(select_data(['heterogenous', 'shared', 'x_cas', 'u_read'], data, precise=True)))
-    mt_xwuw = lt_data(1000, sum_data(select_data(['heterogenous', 'shared', 'x_write', 'u_write'], data, precise=True)))
+    mt_xrxr = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_read', 'x_read'], data, precise=True), maintain_threads=True))
+    mt_xwxw = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_write', 'x_write'], data, precise=True), maintain_threads=True))
+    mt_ucuc = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'u_cas', 'u_cas'], data, precise=True), maintain_threads=True))
+    mt_xcxc = lt_data(1000, sum_data(select_data(['homogenous', 'shared', 'x_cas', 'x_cas'], data, precise=True), maintain_threads=True))
+    mt_xcur = lt_data(1000, sum_data(select_data(['heterogenous', 'shared', 'x_cas', 'u_read'], data, precise=True), maintain_threads=True))
+    mt_xwuw = lt_data(1000, sum_data(select_data(['heterogenous', 'shared', 'x_write', 'u_write'], data, precise=True), maintain_threads=True))
 
     pages = PdfPages(fn)
     plot_entries(pages, st_64, [0], None, ops_read, '', ops_read)
