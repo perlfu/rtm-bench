@@ -1,14 +1,27 @@
-/*
- * A simple restricted transactional memory micro-benchmark.
- *
- * Copyright (c) 2013 Carl G. Ritson <cgr@kent.ac.uk>
- *
- * This file may be freely used, copied, or distributed without compensation 
- * or licensing restrictions, but is done so without any warranty or 
- * implication of merchantability or fitness for any particular purpose.
- *
- * gcc -Wall -O2 rtm-bench.c -o rtm-bench -lpthread -lrt
- */
+/*-----------------------------------------------------------------------------
+ rtm-bench - A simple restricted transactional memory micro-benchmark.
+ Copyright (c) 2013, 2021 Carl G. Ritson <critson@perlfu.co.uk>
+
+ gcc -Wall -O2 rtm-bench.c -o rtm-bench -lpthread -lrt
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+-----------------------------------------------------------------------------*/
 
 #define _GNU_SOURCE
 
